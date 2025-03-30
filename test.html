@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>בדיקת WebSocket</title>
+</head>
+<body>
+  <h2>בדיקת חיבור לשרת WebSocket</h2>
+  <textarea id="log" rows="10" cols="50" readonly></textarea><br>
+  <input id="msg" type="text" placeholder='הודעה לשליחה'>
+  <button onclick="sendMsg()">שלח</button>
+
+  <script>
+    const log = document.getElementById('log');
+    const ws = new WebSocket('ws://10.100.102.24:3000');
+
+    ws.onopen = () => log.value += '🔗 מחובר!\n';
+    ws.onmessage = (e) => log.value += '📨 ' + e.data + '\n';
+    ws.onerror = (e) => log.value += '❌ שגיאה\n';
+    ws.onclose = () => log.value += '🔌 נותק\n';
+
+    function sendMsg() {
+      const text = document.getElementById('msg').value;
+      ws.send(text);
+      log.value += '📤 נשלח: ' + text + '\n';
+    }
+  </script>
+</body>
+</html>
