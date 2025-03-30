@@ -10,24 +10,40 @@ server.on('connection', (socket) => {
       const { type, room, message, username } = data;
 
       if (type === 'join') {
-        if (!rooms[room]) rooms[room] = [];
-        rooms[room].push(socket);
+        // יצירת חדר אם לא קיים
+        if (!rooms[room]) {
+          rooms[room] = { sockets: [], lastMessage: null };
+        }
+
+        // הצטרפות לחדר
+        rooms[room].sockets.push(socket);
         socket.room = room;
         socket.username = username || 'אנונימי';
         console.log(`👤 ${socket.username} joined room "${room}"`);
+
+        // שלח הודעה אחרונה אם קיימת
+        if (rooms[room].lastMessage) {
+          socket.send(JSON.stringify({
+            message: rooms[room].lastMessage
+          }));
+        }
       }
 
       if (type === 'chat') {
         const sender = socket.username || 'מישהו';
-        const payload = JSON.stringify({ message: `${sender}: ${message}` });
+        const fullMessage = `${sender}: ${message}`;
+        rooms[room].lastMessage = fullMessage;
 
-        rooms[room]?.forEach(s => {
+        // שידור לכולם (כולל השולח)
+        rooms[room]?.sockets.forEach(s => {
           if (s.readyState === WebSocket.OPEN) {
-            s.send(payload);
+            s.send(JSON.stringify({ message: fullMessage }));
           }
         });
-        console.log(`💬 ${sender} @${room}: ${message}`);
+
+        console.log(`💬 ${fullMessage} @${room}`);
       }
+
     } catch (e) {
       console.error("❌ Invalid message:", msg);
     }
@@ -35,9 +51,11 @@ server.on('connection', (socket) => {
 
   socket.on('close', () => {
     const room = socket.room;
-    if (room) {
-      rooms[room] = rooms[room]?.filter(s => s !== socket);
-      if (rooms[room]?.length === 0) delete rooms[room];
+    if (room && rooms[room]) {
+      rooms[room].sockets = rooms[room].sockets.filter(s => s !== socket);
+      if (rooms[room].sockets.length === 0) {
+        delete rooms[room]; // מחיקה מלאה אם אין משתתפים
+      }
       console.log(`👤 ${socket.username || 'מישהו'} left room "${room}"`);
     }
   });
