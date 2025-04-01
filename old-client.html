@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>צ'אט עם חדרים</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 2em;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    h2 {
+      color: #444;
+      text-align: center;
+    }
+
+    input, button {
+      font-size: 1em;
+      padding: 0.6em;
+      margin: 0.3em;
+      border: 1px solid #ccc;
+      border-radius: 0.4em;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #log {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 1em;
+      height: 200px;
+      overflow-y: auto;
+      white-space: pre-line;
+      margin-top: 1em;
+    }
+
+    #chat {
+      margin-top: 1.5em;
+      display: none;
+    }
+
+    #spinner {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      margin-top: 1em;
+    }
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #4caf50;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        margin: 1em;
+      }
+      input, button {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0.5em 0;
+      }
+    }
+
+    #status {
+      margin-top: 0.5em;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>💬 צ׳אט בין משתמשים</h2>
+
+  <div>
+    <label>שם חדר:</label>
+    <input id="room" placeholder="room1" />
+    <label>שם משתמש:</label>
+    <input id="username" placeholder="Alice" />
+    <button onclick="joinRoom()">הצטרף לחדר</button>
+    <div id="status">🔄 ממתין לחיבור לשרת...</div>
+    <div id="spinner">
+      <div class="loader"></div>
+      <span>השרת מתעורר... זה עלול לקחת חצי דקה ⏳</span>
+    </div>
+  </div>
+
+  <div id="chat">
+    <input id="text" placeholder="הקלד הודעה" />
+    <button onclick="sendMessage()">שלח</button>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    let socket;
+    let currentRoom = "";
+    let username = "";
+
+    function log(msg) {
+      const logEl = document.getElementById("log");
+      logEl.innerHTML += msg + "<br>";
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function joinRoom() {
+      currentRoom = document.getElementById("room").value.trim();
+      username = document.getElementById("username").value.trim();
+      if (!currentRoom || !username) return alert("נא להזין שם חדר ושם משתמש");
+
+      document.getElementById("status").textContent = "🔄 מנסה להתחבר לשרת...";
+      document.getElementById("spinner").style.display = "flex";
+
+      socket = new WebSocket("wss://chat-server-kqi4.onrender.com");
+
+      socket.onopen = () => {
+        document.getElementById("status").textContent = "✅ מחובר";
+        document.getElementById("spinner").style.display = "none";
+        document.getElementById("chat").style.display = "block";
+        socket.send(JSON.stringify({ type: "join", room: currentRoom, username }));
+        log(`נכנסת לחדר "${currentRoom}" בתור ${username}`);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          log("📨 " + data.message);
+        } catch (e) {
+          log("⚠️ הודעה לא תקינה: " + event.data);
+        }
+      };
+
+      socket.onerror = () => {
+        document.getElementById("status").textContent = "❌ שגיאה בהתחברות לשרת";
+        document.getElementById("spinner").style.display = "none";
+        log("שגיאה: ייתכן שהשרת עדיין מתעורר או שהחיבור נכשל.");
+      };
+
+      socket.onclose = () => {
+        document.getElementById("status").textContent = "🔌 נותקת מהשרת";
+        document.getElementById("spinner").style.display = "none";
+        log("נותקת מהשרת.");
+      };
+    }
+
+    function sendMessage() {
+      const msg = document.getElementById("text").value;
+      if (msg && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "chat", room: currentRoom, message: msg }));
+        document.getElementById("text").value = "";
+      }
+    }
+  </script>
+</body>
+</html>

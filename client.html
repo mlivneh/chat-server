@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>צ'אט משחקים מתקדם</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --primary-color: #4a6fa5;
+      --primary-dark: #3d5a80;
+      --primary-light: #6c8fc7;
+      --accent-color: #4caf50;
+      --accent-dark: #388e3c;
+      --background-color: #f5f7fa;
+      --card-color: #ffffff;
+      --text-color: #333333;
+      --border-radius: 8px;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h2, h3 {
+      color: var(--primary-dark);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--primary-dark);
+    }
+
+    input, button, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--accent-dark);
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #status {
+      text-align: center;
+      padding: 8px;
+      margin: 15px 0;
+      border-radius: var(--border-radius);
+      font-weight: bold;
+    }
+
+    .status-connecting {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+    }
+
+    .status-connected {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .status-error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    #chat-area {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #message-container {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 18px;
+      display: inline-block;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .system-message {
+      background-color: #e1e1e1;
+      color: #666;
+      text-align: center;
+      margin: 10px auto;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.9rem;
+      display: block;
+    }
+
+    .my-message {
+      background-color: var(--primary-light);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 5px;
+    }
+
+    .other-message {
+      background-color: var(--card-color);
+      border: 1px solid #ddd;
+      margin-right: auto;
+      border-bottom-left-radius: 5px;
+    }
+    
+    .sender-name {
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 2px;
+      display: block;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 10px;
+      position: relative;
+      clear: both;
+    }
+
+    #spinner {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid var(--primary-color);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* חלק סימולציית המשחק */
+    #game-demo {
+      margin-top: 20px;
+      padding: 15px;
+      border: 2px dashed var(--primary-color);
+      border-radius: var(--border-radius);
+      background-color: rgba(74, 111, 165, 0.1);
+    }
+
+    .game-title {
+      color: var(--primary-dark);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .game-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .game-controls button {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .game-display {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: 15px;
+      margin-top: 15px;
+      min-height: 100px;
+      text-align: center;
+    }
+
+    .game-status {
+      margin-top: 10px;
+      font-style: italic;
+      text-align: center;
+      color: var(--primary-color);
+    }
+
+    /* הגדרות רספונסיביות */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .message {
+        max-width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2>💬 צ'אט משחקים מתקדם</h2>
+      
+      <!-- טופס התחברות -->
+      <div id="login-form">
+        <div class="form-group">
+          <label for="username">שם משתמש:</label>
+          <input type="text" id="username" placeholder="הכנס את שמך" autocomplete="off" />
+        </div>
+        
+        <div class="form-group">
+          <label for="room">שם חדר:</label>
+          <input type="text" id="room" placeholder="הכנס שם חדר" autocomplete="off" value="חדר1" />
+        </div>
+        
+        <button id="connect-btn">התחבר לחדר</button>
+      </div>
+      
+      <div id="status" class="status-connecting">ממתין לחיבור...</div>
+      
+      <div id="spinner">
+        <div class="loader"></div>
+        <span>השרת מתעורר... זה עלול לקחת כחצי דקה ⏳</span>
+      </div>
+      
+      <!-- אזור הצ'אט -->
+      <div id="chat-area">
+        <div id="message-container"></div>
+        
+        <div class="form-group">
+          <input type="text" id="message-input" placeholder="הקלד הודעה..." autocomplete="off" />
+          <button id="send-btn">שלח</button>
+        </div>
+        
+        <!-- דמו למשחק -->
+        <div id="game-demo">
+          <h3 class="game-title">🎮 סימולציית משחק</h3>
+          <p>זו דוגמה לאינטגרציה של מנגנון הצ'אט עם משחק. בדוגמה זו ניתן להעביר סטטוס בסיסי בין המשתתפים.</p>
+          
+          <div class="game-controls">
+            <button id="game-btn1">עדכן ניקוד 🏆</button>
+            <button id="game-btn2">בחר צבע 🎨</button>
+          </div>
+          
+          <div class="game-display">מידע על המשחק יופיע כאן</div>
+          
+          <div class="game-status">ממתין למהלך משחק...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- מודול תקשורת -->
+  <script>
+    /**
+     * GameConnection
+     * מודול קליינט לתקשורת WebSocket עבור משחקים ואפליקציות צ'אט
+     */
+    class GameConnection {
+      /**
+       * יצירת חיבור חדש
+       * @param {string} serverUrl - כתובת שרת ה-WebSocket
+       */
+      constructor(serverUrl) {
+        this.socket = null;
+        this.serverUrl = serverUrl;
+        this.room = '';
+        this.username = '';
+        this.connected = false;
+        
+        // מאזינים לאירועים
+        this.listeners = {
+          onConnect: null,      // בעת התחברות
+          onDisconnect: null,   // בעת ניתוק
+          onError: null,        // בעת שגיאה
+          onTextMessage: null,  // בעת קבלת הודעת טקסט
+          onStatusUpdate: null, // בעת קבלת עדכון סטטוס
+          onHistory: null       // בעת קבלת היסטוריה
+        };
+        
+        // אינדיקטור האם השרת בתהליך התעוררות
+        this.serverWakingUp = false;
+      }
+      
+      /**
+       * התחברות לשרת והצטרפות לחדר
+       * @param {string} username - שם המשתמש
+       * @param {string} room - מזהה החדר
+       * @returns {Promise} הבטחה שמתממשת בעת התחברות
+       */
+      connect(username, room) {
+        return new Promise((resolve, reject) => {
+          if (!username || !room) {
+            reject(new Error('שם משתמש וחדר הם שדות חובה'));
+            return;
+          }
+          
+          this.room = room;
+          this.username = username;
+          this.serverWakingUp = false;
+          
+          // סגירת חיבור קודם אם קיים
+          if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
+            this.socket.close();
+          }
+          
+          try {
+            this.socket = new WebSocket(this.serverUrl);
+            
+            // טיימאאוט להתעוררות השרת
+            const wakeupTimeout = setTimeout(() => {
+              if (!this.connected) {
+                this.serverWakingUp = true;
+                if (this.listeners.onStatusUpdate) {
+                  this.listeners.onStatusUpdate('waking-up');
+                }
+              }
+            }, 3000);
+            
+            this.socket.onopen = () => {
+              clearTimeout(wakeupTimeout);
+              this.connected = true;
+              this.serverWakingUp = false;
+              
+              // שליחת הודעת הצטרפות לחדר
+              this.socket.send(JSON.stringify({
+                type: 'JOIN',
+                room: this.room,
+                sender: this.username
+              }));
+              
+              if (this.listeners.onConnect) {
+                this.listeners.onConnect();
+              }
+              
+              resolve();
+            };
+            
+            this.socket.onclose = () => {
+              clearTimeout(wakeupTimeout);
+              this.connected = false;
+              
+              if (this.listeners.onDisconnect) {
+                this.listeners.onDisconnect();
+              }
+            };
+            
+            this.socket.onerror = (error) => {
+              clearTimeout(wakeupTimeout);
+              
+              if (this.listeners.onError) {
+                this.listeners.onError(error);
+              }
+              
+              reject(error);
+            };
+            
+            this.socket.onmessage = (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                
+                // טיפול בסוגי ההודעות השונים
+                switch (data.type) {
+                  case 'TEXT':
+                    if (this.listeners.onTextMessage) {
+                      this.listeners.onTextMessage(data);
+                    }
+                    break;
+                    
+                  case 'STATUS':
+                    if (this.listeners.onStatusUpdate) {
+                      this.listeners.onStatusUpdate(data);
+                    }
+                    break;
+                    
+                  case 'HISTORY':
+                    if (this.listeners.onHistory) {
+                      this.listeners.onHistory(data.content);
+                    }
+                    break;
+                }
+              } catch (error) {
+                console.error('שגיאה בפענוח הודעה:', error);
+              }
+            };
+            
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+      
+      /**
+       * שליחת הודעת טקסט לחדר
+       * @param {string} text - תוכן הטקסט
+       */
+      sendTextMessage(text) {
+        if (!this.connected || !this.socket) {
+          throw new Error('לא מחובר לשרת');
+        }
+        
+        this.socket.send(JSON.stringify({
+          type: 'TEXT',
+          room: this.room,
+          sender: this.username,
+          content: text
+        }));
+      }
+      
+      /**
+       * שליחת עדכון סטטוס משחק לכל המשתתפים בחדר
+       * @param {any} statusData - מידע סטטוס לשליחה
+       */
+      sendGameStatus(statusData) {
+        if (!this.connected || !this.socket) {
+          throw new Error('לא מחובר לשרת');
+        }
+        
+        this.socket.send(JSON.stringify({
+          type: 'STATUS',
+          room: this.room,
+          sender: this.username,
+          content: statusData
+        }));
+      }
+      
+      /**
+       * ניתוק מהשרת
+       */
+      disconnect() {
+        if (this.socket) {
+          this.socket.close();
+        }
+        
+        this.connected = false;
+      }
+      
+      /**
+       * הגדרת מאזין לאירוע
+       * @param {string} event - סוג האירוע
+       * @param {Function} callback - פונקציית קולבק
+       */
+      on(event, callback) {
+        if (this.listeners.hasOwnProperty(event)) {
+          this.listeners[event] = callback;
+        } else {
+          console.warn(`אירוע לא מוכר: ${event}`);
+        }
+      }
+    }
+
+    // קוד להפעלת הממשק
+    document.addEventListener('DOMContentLoaded', function() {
+      // אלמנטים בממשק
+      const loginForm = document.getElementById('login-form');
+      const usernameInput = document.getElementById('username');
+      const roomInput = document.getElementById('room');
+      const connectBtn = document.getElementById('connect-btn');
+      const statusDiv = document.getElementById('status');
+      const spinnerDiv = document.getElementById('spinner');
+      const chatArea = document.getElementById('chat-area');
+      const messageContainer = document.getElementById('message-container');
+      const messageInput = document.getElementById('message-input');
+      const sendBtn = document.getElementById('send-btn');
+      const gameBtn1 = document.getElementById('game-btn1');
+      const gameBtn2 = document.getElementById('game-btn2');
+      const gameDisplay = document.querySelector('.game-display');
+      const gameStatus = document.querySelector('.game-status');
+      
+      // יצירת חיבור לשרת
+      const connection = new GameConnection('wss://chat-server-kqi4.onrender.com');
+      
+      // משתנים לדוגמת המשחק
+      let gameScore = 0;
+      let gameColor = '#4a6fa5';
+      
+      // הוספת הודעה לממשק
+      function addMessage(message, isSystem = false) {
+        const messageElem = document.createElement('div');
+        
+        if (isSystem) {
+          messageElem.className = 'system-message';
+          messageElem.textContent = message;
+        } else {
+          const messageRow = document.createElement('div');
+          messageRow.className = 'message-row';
+          
+          messageElem.className = message.sender === connection.username ? 'message my-message' : 'message other-message';
+          
+          if (message.sender !== connection.username) {
+            const senderElem = document.createElement('span');
+            senderElem.className = 'sender-name';
+            senderElem.textContent = message.sender;
+            messageElem.appendChild(senderElem);
+          }
+          
+          const contentElem = document.createElement('div');
+          contentElem.textContent = message.content;
+          messageElem.appendChild(contentElem);
+          
+          messageRow.appendChild(messageElem);
+          messageContainer.appendChild(messageRow);
+          
+          // גלילה לתחתית
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+          return;
+        }
+        
+        messageContainer.appendChild(messageElem);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
+      
+      // עדכון תצוגת המשחק
+      function updateGameDisplay() {
+        gameDisplay.innerHTML = `
+          <div style="color: ${gameColor}; font-size: 1.2em; margin-bottom: 8px;">
+            <strong>ניקוד נוכחי: ${gameScore}</strong>
+          </div>
+          <div>צבע נבחר: <span style="display: inline-block; width: 20px; height: 20px; background-color: ${gameColor}; vertical-align: middle; border: 1px solid #ccc;"></span></div>
+        `;
+      }
+      
+      // מאזינים לאירועי החיבור
+      connection.on('onConnect', () => {
+        statusDiv.textContent = '✅ מחובר לשרת';
+        statusDiv.className = 'status-connected';
+        spinnerDiv.style.display = 'none';
+        loginForm.style.display = 'none';
+        chatArea.style.display = 'block';
+        
+        addMessage('התחברת לצ\'אט בהצלחה!', true);
+      });
+      
+      connection.on('onDisconnect', () => {
+        statusDiv.textContent = '❌ נותקת מהשרת';
+        statusDiv.className = 'status-error';
+        loginForm.style.display = 'block';
+        chatArea.style.display = 'none';
+      });
+      
+      connection.on('onError', (error) => {
+        statusDiv.textContent = '❌ שגיאה בהתחברות';
+        statusDiv.className = 'status-error';
+        spinnerDiv.style.display = 'none';
+        console.error('שגיאת חיבור:', error);
+      });
+      
+      connection.on('onStatusUpdate', (data) => {
+        if (data === 'waking-up') {
+          // השרת בתהליך התעוררות
+          spinnerDiv.style.display = 'flex';
+          return;
+        }
+        
+        // עדכון סטטוס משחק
+        try {
+          if (data && data.content) {
+            const status = data.content;
+            
+            if (status.type === 'score') {
+              gameScore = status.value;
+              gameStatus.textContent = `${data.sender} עדכן את הניקוד ל-${status.value}`;
+            } else if (status.type === 'color') {
+              gameColor = status.value;
+              gameStatus.textContent = `${data.sender} בחר צבע חדש`;
+            }
+            
+            updateGameDisplay();
+          }
+        } catch (e) {
+          console.error('שגיאה בעיבוד סטטוס:', e);
+        }
+      });
+      
+      connection.on('onTextMessage', (message) => {
+        addMessage(message);
+      });
+      
+      connection.on('onHistory', (messages) => {
+        // הוספת היסטוריית הודעות
+        addMessage('היסטוריית הודעות:', true);
+        messages.forEach(message => {
+          addMessage(message);
+        });
+        addMessage('סוף היסטוריה', true);
+      });
+      
+      // כפתור התחברות
+      connectBtn.addEventListener('click', () => {
+        const username = usernameInput.value.trim();
+        const room = roomInput.value.trim();
+        
+        if (!username || !room) {
+          alert('נא להזין שם משתמש ושם חדר');
+          return;
+        }
+        
+        statusDiv.textContent = 'מתחבר לשרת...';
+        statusDiv.className = 'status-connecting';
+        
+        connection.connect(username, room)
+          .catch(error => {
+            console.error('שגיאה בהתחברות:', error);
+            statusDiv.textContent = 'שגיאה בהתחברות';
+            statusDiv.className = 'status-error';
+          });
+      });
+      
+      // שליחת הודעה
+      function sendMessage() {
+        const text = messageInput.value.trim();
+        if (text) {
+          try {
+            connection.sendTextMessage(text);
+            messageInput.value = '';
+          } catch (error) {
+            alert('שגיאה בשליחת ההודעה: ' + error.message);
+          }
+        }
+      }
+      
+      // כפתור שליחת הודעה
+      sendBtn.addEventListener('click', sendMessage);
+      
+      // שליחה בלחיצה על Enter
+      messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      // כפתורי המשחק
+      gameBtn1.addEventListener('click', () => {
+        gameScore += 10;
+        updateGameDisplay();
+        
+        connection.sendGameStatus({
+          type: 'score',
+          value: gameScore
+        });
+        
+        gameStatus.textContent = 'עדכנת את הניקוד';
+      });
+      
+      gameBtn2.addEventListener('click', () => {
+        // בחירת צבע רנדומלי
+        const colors = ['#4a6fa5', '#4caf50', '#e91e63', '#ff9800', '#9c27b0', '#795548'];
+        const newColor = colors[Math.floor(Math.random() * colors.length)];
+        gameColor = newColor;
+        
+        updateGameDisplay();
+        
+        connection.sendGameStatus({
+          type: 'color',
+          value: newColor
+        });
+        
+        gameStatus.textContent = 'בחרת צבע חדש';
+      });
+      
+      // עדכון ראשוני של תצוגת המשחק
+      updateGameDisplay();
+    });
+  </script>
+</body>
+</html>
