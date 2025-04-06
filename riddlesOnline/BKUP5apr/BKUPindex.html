@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>אפליקציית חידות כיתתית</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --primary-color: #4a6fa5;
+      --primary-dark: #3d5a80;
+      --primary-light: #6c8fc7;
+      --accent-color: #4caf50;
+      --accent-dark: #388e3c;
+      --secondary-color: #ff9800;
+      --background-color: #f5f7fa;
+      --card-color: #ffffff;
+      --text-color: #333333;
+      --border-radius: 8px;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h2, h3 {
+      color: var(--primary-dark);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--primary-dark);
+    }
+
+    input, button, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--accent-dark);
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .button-secondary {
+      background-color: var(--secondary-color);
+    }
+
+    .button-secondary:hover {
+      background-color: #e68900;
+    }
+
+    #status {
+      text-align: center;
+      padding: 8px;
+      margin: 15px 0;
+      border-radius: var(--border-radius);
+      font-weight: bold;
+    }
+
+    .status-connecting {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+    }
+
+    .status-connected {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .status-error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    #chat-area {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #message-container {
+      height: 250px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 18px;
+      display: inline-block;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .system-message {
+      background-color: #e1e1e1;
+      color: #666;
+      text-align: center;
+      margin: 10px auto;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.9rem;
+      display: block;
+    }
+
+    .my-message {
+      background-color: var(--primary-light);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 5px;
+    }
+
+    .other-message {
+      background-color: var(--card-color);
+      border: 1px solid #ddd;
+      margin-right: auto;
+      border-bottom-left-radius: 5px;
+    }
+    
+    .sender-name {
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 2px;
+      display: block;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 10px;
+      position: relative;
+      clear: both;
+    }
+
+    #spinner {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid var(--primary-color);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* אזור החידות */
+    #quiz-area {
+      display: none;
+    }
+
+    .role-indicator {
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-align: center;
+      padding: 5px;
+      margin-bottom: 15px;
+      border-radius: 15px;
+    }
+
+    .role-teacher {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #388e3c;
+    }
+
+    .role-student {
+      background-color: rgba(74, 111, 165, 0.2);
+      color: #3d5a80;
+    }
+
+    /* סגנון לחידות */
+    .quiz-question {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .quiz-question-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: var(--primary-dark);
+      font-size: 1.1rem;
+    }
+
+    .quiz-question-text {
+      margin-bottom: 15px;
+    }
+
+    .quiz-answer-group {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #ddd;
+    }
+
+    /* תשובות תלמידים */
+    .student-answers {
+      margin-top: 20px;
+    }
+
+    .student-answer {
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: rgba(74, 111, 165, 0.1);
+      border-radius: var(--border-radius);
+    }
+
+    .correct-answer {
+      border-right: 4px solid #4caf50;
+    }
+
+    .incorrect-answer {
+      border-right: 4px solid #f44336;
+    }
+
+    .teacher-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .teacher-controls button {
+      flex: 1;
+    }
+
+    .students-list {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: var(--border-radius);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .student-item {
+      padding: 5px 10px;
+      margin: 2px 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .student-item:nth-child(odd) {
+      background-color: rgba(0,0,0,0.03);
+    }
+
+    .student-score {
+      font-weight: bold;
+    }
+
+    /* חלק של סטטוס החידות */
+    .quiz-status {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: rgba(255, 152, 0, 0.1);
+      border-radius: var(--border-radius);
+      text-align: center;
+    }
+
+    /* אזור בחירת תפקיד */
+    .role-select {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .role-select label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .role-select input[type="radio"] {
+      width: auto;
+      margin-left: 5px;
+    }
+
+    /* הגדרות רספונסיביות */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .message {
+        max-width: 90%;
+      }
+      .teacher-controls {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2>📝 אפליקציית חידות כיתתית</h2>
+      
+      <!-- טופס התחברות -->
+      <div id="login-form">
+        <div class="form-group">
+          <label for="username">שם משתמש:</label>
+          <input type="text" id="username" placeholder="הכנס את שמך" autocomplete="off" />
+        </div>
+        
+        <div class="form-group">
+          <label for="room">שם חדר:</label>
+          <input type="text" id="room" placeholder="הכנס שם חדר" autocomplete="off" value="חדר1" />
+        </div>
+        
+        <div class="form-group">
+          <label>תפקיד:</label>
+          <div class="role-select">
+            <label>
+              <input type="radio" name="role" value="student" checked id="student-role"> 
+              תלמיד
+            </label>
+            <label>
+              <input type="radio" name="role" value="teacher" id="teacher-role"> 
+              מורה
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group" id="teacher-password-group" style="display: none;">
+          <label for="teacher-password">סיסמת מורה:</label>
+          <input type="password" id="teacher-password" placeholder="הכנס סיסמת מורה" autocomplete="off" />
+          <small style="color: #777; display: block; margin-top: 5px;">
+            רמז: התאריך של היום + 10 (לדוגמה: אם היום 05, הסיסמה היא 15)
+          </small>
+        </div>
+        
+        <button id="connect-btn">התחבר לחדר</button>
+      </div>
+      
+      <div id="status" class="status-connecting">ממתין לחיבור...</div>
+      
+      <div id="spinner">
+        <div class="loader"></div>
+        <span>השרת מתעורר... זה עלול לקחת כחצי דקה ⏳</span>
+      </div>
+      
+      <!-- אזור המשתמש - משותף למורה ולתלמיד -->
+      <div id="user-area" style="display:none">
+        <div class="role-indicator" id="role-display">תפקיד: לא מוגדר</div>
+        
+        <!-- אזור החידות -->
+        <div id="quiz-area">
+          <!-- תצוגת מורה -->
+          <div id="teacher-view" style="display:none">
+            <h3>ניהול חידות</h3>
+            
+            <div class="students-list" id="students-list">
+              <div class="student-item">טוען רשימת תלמידים...</div>
+            </div>
+            
+            <div class="quiz-selector">
+              <div class="form-group">
+                <label for="quiz-select">בחר חידה:</label>
+                <select id="quiz-select">
+                  <option value="">-- בחר חידה --</option>
+                </select>
+              </div>
+              
+              <div id="selected-quiz-preview" class="quiz-question" style="display:none">
+                <div class="quiz-question-title" id="preview-title"></div>
+                <div class="quiz-question-text" id="preview-text"></div>
+                <div id="preview-answers"></div>
+              </div>
+              
+              <div class="teacher-controls">
+                <button id="send-quiz-btn" disabled>שלח חידה לתלמידים</button>
+                <button id="end-quiz-btn" class="button-secondary" disabled>סיים חידה נוכחית</button>
+              </div>
+            </div>
+            
+            <div class="student-answers" id="student-answers">
+              <!-- תשובות התלמידים יוצגו כאן -->
+            </div>
+          </div>
+          
+          <!-- תצוגת תלמיד -->
+          <div id="student-view" style="display:none">
+            <h3>חידה נוכחית</h3>
+            
+            <div class="quiz-status">ממתין לחידה מהמורה...</div>
+            
+            <div id="current-quiz" style="display:none">
+              <!-- החידה תוצג כאן -->
+            </div>
+            
+            <div id="answer-area" style="display:none">
+              <!-- אזור התשובות יוצג כאן -->
+              <button id="submit-answer-btn" disabled>שלח תשובה</button>
+            </div>
+            
+            <div id="result-area" style="display:none">
+              <!-- תוצאות יוצגו כאן -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- אזור הצ'אט -->
+        <div id="chat-area">
+          <h3>צ'אט כיתתי</h3>
+          <div id="message-container"></div>
+          
+          <div class="form-group">
+            <input type="text" id="message-input" placeholder="הקלד הודעה..." autocomplete="off" />
+            <button id="send-btn">שלח</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- קבצי JavaScript -->
+  <script src="quizManager.js"></script>
+  <script src="quiz-data.js"></script>
+  
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>מערכת חידות כיתתית</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- סגנונות CSS -->
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // לוגים נוספים לדיבוג
+    console.log('טעינת עמוד HTML החלה');
+    window.addEventListener('error', function(e) {
+      console.error('שגיאת JavaScript:', e.message, 'בקובץ:', e.filename, 'שורה:', e.lineno);
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2>🎮 מערכת חידות כיתתית</h2>
+      
+      <!-- טופס התחברות -->
+      <div id="login-form">
+        <div class="form-group">
+          <label for="username">שם משתמש:</label>
+          <input type="text" id="username" placeholder="הכנס את שמך" autocomplete="off" />
+        </div>
+        
+        <div class="form-group">
+          <label for="room">שם חדר:</label>
+          <input type="text" id="room" placeholder="הכנס שם חדר" autocomplete="off" value="חדר1" />
+        </div>
+        
+        <div class="form-group">
+          <label>תפקיד:</label>
+            <div class="role-selector">
+              <div class="role-option">
+                <input type="radio" id="teacher-role" name="role" value="teacher">
+                <label for="teacher-role">מורה</label>
+              </div>
+              <div class="role-option">
+                <input type="radio" id="student-role" name="role" value="student" checked>
+                <label for="student-role">תלמיד</label>
+              </div>
+            </div>
+        </div>
+        
+        <div class="form-group" id="teacher-password-group" style="display: none;">
+          <label for="teacher-password">סיסמת מורה:</label>
+          <input type="password" id="teacher-password" placeholder="הכנס סיסמה" />
+          <div class="password-hint">רמז: תאריך היום + 10</div>
+        </div>
+        
+        <button id="connect-btn">התחבר לחדר</button>
+      </div>
+      
+      <div id="status" class="status-connecting">ממתין לחיבור...</div>
+      
+      <div id="spinner">
+        <div class="loader"></div>
+        <span>השרת מתעורר... זה עלול לקחת כחצי דקה ⏳</span>
+      </div>
+      
+      <!-- אזור המשתמש -->
+      <div id="user-area" style="display: none;">
+        <div id="role-display" class="role-indicator">תפקיד: תלמיד</div>
+        
+        <!-- אזור החידות -->
+        <div id="quiz-area" style="display: none;">
+          <!-- תצוגת מורה -->
+          <div id="teacher-view" style="display: none;">
+            <div class="teacher-panel">
+              <div class="quiz-selection">
+                <h3>בחירת חידה</h3>
+                <select id="quiz-select">
+                  <option value="">בחר חידה לשליחה</option>
+                </select>
+                
+                <div id="selected-quiz-preview" style="display: none;">
+                  <div class="quiz-preview">
+                    <h4 id="preview-title"></h4>
+                    <div id="preview-text"></div>
+                    <div class="preview-answers">
+                      <h4>תשובות נכונות:</h4>
+                      <div id="preview-answers"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="quiz-actions">
+                  <button id="send-quiz-btn" disabled>שלח חידה</button>
+                  <button id="end-quiz-btn" disabled>סיים חידה</button>
+                </div>
+              </div>
+              
+              <div id="student-answers">
+                <h3>תשובות תלמידים</h3>
+                <div class="quiz-status">לא נשלחה חידה עדיין</div>
+              </div>
+            </div>
+            
+            <div id="students-list" class="students-list">
+              <div class="student-item">אין תלמידים מחוברים כרגע</div>
+            </div>
+          </div>
+          
+          <!-- תצוגת תלמיד -->
+          <div id="student-view" style="display: none;">
+            <div id="current-quiz" style="display: none;"></div>
+            
+            <div id="answer-area" style="display: none;">
+              <div class="quiz-actions">
+                <button id="submit-answer-btn">שלח תשובה</button>
+              </div>
+            </div>
+            
+            <div id="result-area" style="display: none;"></div>
+            
+            <div class="quiz-status">ממתין לחידה מהמורה...</div>
+          </div>
+        </div>
+        
+        <!-- אזור הצ'אט -->
+        <div id="chat-area" style="display: none;">
+          <h3>צ'אט</h3>
+          <div id="message-container"></div>
+          
+          <div class="form-group">
+            <input type="text" id="message-input" placeholder="הקלד הודעה..." autocomplete="off" />
+            <button id="send-btn">שלח</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- קובץ קבוע של חידות -->
+  <script src="quizData.js"></script>
+  
+  <!-- טעינת המודולים -->
+  <script src="connection.js"></script>
+  <script src="quizManager.js"></script>
+  <script src="app.js"></script>
+  
+  <script>
+    // וידוא טעינה נכונה של כל הקבצים
+    console.log('קבצי JavaScript נטענו:');
+    console.log('- quizData.js נטען:', typeof quizQuestions !== 'undefined');
+    console.log('- connection.js נטען:', typeof GameConnection !== 'undefined');
+    console.log('- quizManager.js נטען:', typeof QuizManager !== 'undefined');
+    
+    // בדיקת שרת בתהליך אתחול
+    window.addEventListener('load', function() {
+      console.log('העמוד נטען במלואו');
+    });
+  </script>
+</body>
+</html>

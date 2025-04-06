@@ -1,6 +1,11 @@
+/**
+ * שרת WebSocket עם תמיכה מורחבת בסוגי הודעות
+ * משתמש במודול handlers.js לטיפול בסוגי ההודעות השונים
+ */
 const WebSocket = require('ws');
-const server = new WebSocket.Server({ port: process.env.PORT || 3000 });
+const handlers = require('./handlers');
 
+const server = new WebSocket.Server({ port: process.env.PORT || 3000 });
 const rooms = {};
 
 server.on('connection', (socket) => {
@@ -9,7 +14,7 @@ server.on('connection', (socket) => {
   socket.on('message', (msg) => {
     try {
       const data = JSON.parse(msg);
-      const { type, room, sender, content } = data;
+      const { type, room } = data;
       
       if (!room) {
         console.error("❌ Room ID is required");
@@ -22,93 +27,13 @@ server.on('connection', (socket) => {
         console.log(`🏠 New room created: ${room}`);
       }
       
-      // טיפול בסוגים שונים של הודעות
-      switch (type) {
-        case 'JOIN':
-          // הצטרפות לחדר
-          socket.room = room;
-          socket.username = sender || 'אנונימי';
-          rooms[room].sockets.push(socket);
-          
-          console.log(`👤 ${socket.username} joined room "${room}"`);
-          
-          // שליחת הודעת מערכת לכולם
-          const joinMessage = {
-            type: 'TEXT',
-            sender: 'מערכת',
-            content: `${socket.username} הצטרף/ה לחדר`
-          };
-          
-          // שמירת ההודעה בהיסטוריה
-          rooms[room].history.push(joinMessage);
-          
-          // שליחה לכולם
-          rooms[room].sockets.forEach(s => {
-            if (s.readyState === WebSocket.OPEN) {
-              s.send(JSON.stringify(joinMessage));
-            }
-          });
-          
-          // שליחת היסטוריה
-          if (rooms[room].history.length > 0) {
-            // שליחת עד 10 הודעות אחרונות בלבד
-            const recentHistory = rooms[room].history.slice(-10);
-            socket.send(JSON.stringify({
-              type: 'HISTORY',
-              content: recentHistory
-            }));
-          }
-          break;
-          
-        case 'TEXT':
-          // וידוא תוכן תקין
-          if (!content) {
-            console.error("❌ Message content is empty");
-            return;
-          }
-          
-          // יצירת אובייקט ההודעה
-          const textMessage = {
-            type: 'TEXT',
-            sender: socket.username || sender || 'אנונימי',
-            content: content
-          };
-          
-          // שמירה בהיסטוריה (עד 50 הודעות אחרונות)
-          rooms[room].history.push(textMessage);
-          if (rooms[room].history.length > 50) {
-            rooms[room].history.shift();
-          }
-          
-          // שליחה לכולם
-          rooms[room].sockets.forEach(s => {
-            if (s.readyState === WebSocket.OPEN) {
-              s.send(JSON.stringify(textMessage));
-            }
-          });
-          
-          console.log(`💬 Text message in room ${room} from ${textMessage.sender}`);
-          break;
-          
-        case 'STATUS':
-          // שליחת סטטוס משחק לכולם חוץ מהשולח
-          const statusMessage = {
-            type: 'STATUS',
-            sender: socket.username || sender || 'אנונימי',
-            content: content
-          };
-          
-          rooms[room].sockets.forEach(s => {
-            if (s !== socket && s.readyState === WebSocket.OPEN) {
-              s.send(JSON.stringify(statusMessage));
-            }
-          });
-          
-          console.log(`🎮 Game status update in room ${room} from ${statusMessage.sender}`);
-          break;
-          
-        default:
-          console.log(`⚠️ Unknown message type: ${type}`);
+      // טיפול בהודעה לפי סוג
+      if (handlers[type]) {
+        // אם קיים מטפל ספציפי לסוג זה, השתמש בו
+        handlers[type](socket, data, rooms);
+      } else {
+        // אחרת, השתמש במטפל הגנרי
+        handlers.generic(socket, data, rooms);
       }
     } catch (e) {
       console.error("❌ Error processing message:", e.message);
@@ -158,3 +83,4 @@ server.on('connection', (socket) => {
 });
 
 console.log(`WebSocket server is running on port ${process.env.PORT || 3000}`);
+console.log(`Supported message types: ${Object.keys(handlers).join(', ')}`);
